@@ -28,15 +28,22 @@ class Stage1Test {
      */
     @Test
     void testJdbcConnectionPool() throws SQLException {
+        // 커넥션 풀 생성
         final JdbcConnectionPool jdbcConnectionPool = JdbcConnectionPool.create(H2_URL, USER, PASSWORD);
-
+        // 현재 활성 커넥션 0개
         assertThat(jdbcConnectionPool.getActiveConnections()).isZero();
+
+        // 커넥션 풀 할당
         try (final var connection = jdbcConnectionPool.getConnection()) {
+            // 현재 활성 커넥션 1개
             assertThat(connection.isValid(1)).isTrue();
             assertThat(jdbcConnectionPool.getActiveConnections()).isEqualTo(1);
         }
+        // try-with-resources 종료 후 활성 커넥션 0개
+        // 커넥션은 닫히는게 아니라 커넥션 풀로 되돌아가는 것! 이 핵심이다
         assertThat(jdbcConnectionPool.getActiveConnections()).isZero();
 
+        // 커넥션 풀 전체 종료
         jdbcConnectionPool.dispose();
     }
 
@@ -64,11 +71,17 @@ class Stage1Test {
         hikariConfig.setJdbcUrl(H2_URL);
         hikariConfig.setUsername(USER);
         hikariConfig.setPassword(PASSWORD);
+
+        // pool size 5로 설정
         hikariConfig.setMaximumPoolSize(5);
+        // preparedStatement 캐시 설정 가능, sql 재컴파일하는거 방지해줌
         hikariConfig.addDataSourceProperty("cachePrepStmts", "true");
+        // 캐시할 PreparedStatement 개수
         hikariConfig.addDataSourceProperty("prepStmtCacheSize", "250");
+        // 캐시 가능한 SQL 길이(문자 수) -> 긴거 캐싱하면 저장공간 많이 차지하여 효율낮음
         hikariConfig.addDataSourceProperty("prepStmtCacheSqlLimit", "2048");
 
+        // HikariCP도 DataSource을 더 추천함
         final var dataSource = new HikariDataSource(hikariConfig);
         final var properties = dataSource.getDataSourceProperties();
 

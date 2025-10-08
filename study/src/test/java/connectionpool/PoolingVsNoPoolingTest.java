@@ -60,8 +60,10 @@ class PoolingVsNoPoolingTest {
         container.stop();
     }
 
+    // 와우 8.59초
     @Test
     void noPooling() throws SQLException {
+        // CP 없이 단일 데이터소스로 요청
         final var dataSource = createMysqlDataSource();
 
         long start = ClockSource.currentTime();
@@ -72,8 +74,10 @@ class PoolingVsNoPoolingTest {
         log.info("Elapsed runtime: {}", ClockSource.elapsedDisplayString(start, end));
     }
 
+    // 우와 1.279초
     @Test
     void pooling() throws SQLException {
+        // CP로 pool size 하나만 만들어서 요청
         final var config = new HikariConfig();
         config.setJdbcUrl(container.getJdbcUrl());
         config.setUsername(container.getUsername());
@@ -93,6 +97,7 @@ class PoolingVsNoPoolingTest {
         log.info("Elapsed runtime: {}", ClockSource.elapsedDisplayString(start, end));
     }
 
+    // 1000번의 db 연결 수행
     private static void connect(DataSource dataSource) throws SQLException {
         // COUNT만큼 DB 연결을 수행한다.
         for (int i = 0; i < COUNT; i++) {

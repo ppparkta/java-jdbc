@@ -36,6 +36,9 @@ class Stage2Test {
         final var hikariPool = getPool((HikariDataSource) dataSource);
 
         // 설정한 커넥션 풀 최대값보다 더 많은 스레드를 생성해서 동시에 디비에 접근을 시도하면 어떻게 될까?
+        // 지금은 테스트를 통과한다!
+        // 실제로는 최대 10개의 커넥션만 생성됨
+        // -> 나머지 스레드는 커넥션이 반환될 때까지 대기 상태(wait queue) 로 들어감.
         final var threads = new Thread[20];
         for (int i = 0; i < threads.length; i++) {
             threads[i] = new Thread(getConnection());
@@ -71,9 +74,11 @@ class Stage2Test {
     }
 
     // 학습 테스트를 위해 HikariPool을 추출
+    // HikariDataSource는 외부 노출 객체이고, 실제 커넥션을 관리하는 내부 클래스는 HikariPool!
     public static HikariPool getPool(final HikariDataSource hikariDataSource)
     {
         try {
+            // reflection으로 pool을 가져와서 풀 내부 상태를 검사한다.
             Field field = hikariDataSource.getClass().getDeclaredField("pool");
             field.setAccessible(true);
             return (HikariPool) field.get(hikariDataSource);
